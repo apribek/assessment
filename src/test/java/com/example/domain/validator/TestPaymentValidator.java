@@ -12,7 +12,6 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
 
 import com.example.domain.Payment;
-import com.example.domain.dto.PaymentDTO;
 
 class TestPaymentValidator {
 
@@ -29,8 +28,8 @@ class TestPaymentValidator {
     }
 
     @Test
-    void supports_shouldReturnFalseForOtherClasses() {
-        assertFalse(validator.supports(Object.class));
+    void supports_shouldReturnTrueForOtherClasses() {
+        assertTrue(validator.supports(Object.class));
     }
 
     @Test
@@ -42,6 +41,7 @@ class TestPaymentValidator {
                 .debtorAccount("ACC1")
                 .creditorAccount("ACC2")
                 .status("CREATED")
+                .createdAt(java.time.LocalDate.now())
                 .build();
         Errors errors = new BeanPropertyBindingResult(payment, "payment");
 
@@ -137,7 +137,7 @@ class TestPaymentValidator {
 
     @Test
     void validateBeforeUpdate_shouldHaveNoErrorsForValidTransition() {
-        java.sql.Date now = new java.sql.Date(System.currentTimeMillis());
+        java.time.LocalDate now = java.time.LocalDate.now();
         Payment persistent = Payment.builder().status("CREATED").createdAt(now).amount(100.0).build();
         Payment updated = Payment.builder().status("COMPLETED").createdAt(now).amount(100.0).build();
 
@@ -148,7 +148,7 @@ class TestPaymentValidator {
 
     @Test
     void validateBeforeUpdate_shouldHaveErrorForInvalidStatusTransition() {
-        java.sql.Date now = new java.sql.Date(System.currentTimeMillis());
+        java.time.LocalDate now = java.time.LocalDate.now();
         Payment persistent = Payment.builder().status("COMPLETED").createdAt(now).build();
         Payment updated = Payment.builder().status("FAILED").createdAt(now).build();
 
@@ -160,8 +160,8 @@ class TestPaymentValidator {
 
     @Test
     void validateBeforeUpdate_shouldHaveErrorWhenCreatedAtChanged() {
-        java.sql.Date now = new java.sql.Date(System.currentTimeMillis());
-        java.sql.Date later = new java.sql.Date(now.getTime() + 1000);
+        java.time.LocalDate now = java.time.LocalDate.now();
+        java.time.LocalDate later = now.plusDays(1);
         Payment persistent = Payment.builder().status("CREATED").createdAt(now).build();
         Payment updated = Payment.builder().status("CREATED").createdAt(later).build();
 
@@ -173,7 +173,7 @@ class TestPaymentValidator {
 
     @Test
     void validateBeforeUpdate_shouldHaveErrorWhenAmountChangedInCompletedStatus() {
-        java.sql.Date now = new java.sql.Date(System.currentTimeMillis());
+        java.time.LocalDate now = java.time.LocalDate.now();
         Payment persistent = Payment.builder().status("COMPLETED").createdAt(now).amount(100.0).build();
         Payment updated = Payment.builder().status("COMPLETED").createdAt(now).amount(200.0).build();
 

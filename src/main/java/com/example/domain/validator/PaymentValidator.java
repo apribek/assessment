@@ -41,6 +41,9 @@ public class PaymentValidator implements Validator {
         if (!statusIsPresent(payment)) {
             errors.rejectValue("status", "status.notPresent", "Status is required");
         }
+        if (!createdAtIsPresent(payment)) {
+            errors.rejectValue("createdAt", "createdAt.notPresent", "Created at is required");
+        }
     }
 
     public boolean idIsNull(Payment payment) {
@@ -65,6 +68,10 @@ public class PaymentValidator implements Validator {
 
     public boolean statusIsPresent(Payment payment) {
         return payment.getStatus() != null && !payment.getStatus().isBlank();
+    }
+
+    public boolean createdAtIsPresent(Payment payment) {
+        return payment.getCreatedAt() != null;
     }
 
     public List<String> validateBeforeUpdate(Payment payment, Payment persistentPayment) {
@@ -96,7 +103,7 @@ public class PaymentValidator implements Validator {
         return errorMessages;
     }
 
-    private boolean isValidStatusTransition(String from, String to) {
+    public boolean isValidStatusTransition(String from, String to) {
         return switch (from) {
             case "CREATED" -> to.equals("COMPLETED") || to.equals("FAILED");
             default -> false;
@@ -104,6 +111,18 @@ public class PaymentValidator implements Validator {
     }
 
     private boolean isChangeAllowed(String status) {
+        return status.equals("CREATED");
+    }
+
+    public List<String> validateBeforeDelete(Payment payment) {
+        List<String> errorMessages = new ArrayList<>();
+        if (!isDeletable(payment.getStatus())) {
+            errorMessages.add("status.notDeletable: Payment cannot be deleted");
+        }
+        return errorMessages;
+    }
+
+    private boolean isDeletable(String status) {
         return status.equals("CREATED");
     }
 }

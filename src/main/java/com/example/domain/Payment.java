@@ -1,6 +1,6 @@
 package com.example.domain;
 
-import java.sql.Date;
+import java.time.LocalDate;
 import java.util.UUID;
 
 import com.example.domain.dto.PaymentDTO;
@@ -23,7 +23,7 @@ public class Payment {
         private String debtorAccount;
         private String creditorAccount;
         private String status;
-        private Date createdAt;
+        private LocalDate createdAt;
 
         public Payment(PaymentDTO paymentDTO) {
                 this.amount = paymentDTO.getAmount();

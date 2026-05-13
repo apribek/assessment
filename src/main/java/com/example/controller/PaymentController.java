@@ -5,10 +5,12 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -50,18 +52,44 @@ class PaymentController {
 
   @GetMapping("/payments/{id}")
   Payment getPayment(@PathVariable java.util.UUID id) {
-
-    return paymentService.findById(id)
-        .orElseThrow(() -> new PaymentNotFoundException(id));
+    return paymentService.findById(id);
   }
 
-  @org.springframework.web.bind.annotation.PutMapping("/payments/{id}")
+  @PutMapping("/payments/{id}")
   ResponseEntity<Payment> updatePayment(@PathVariable java.util.UUID id, @Validated @RequestBody Payment payment) {
     payment.setId(id);
     try {
       return ResponseEntity.ok(paymentService.update(payment));
     } catch (PaymentValidationException e) {
       return ResponseEntity.status(400).body(payment);
+    }
+  }
+
+  @DeleteMapping("/payments/{id}")
+  ResponseEntity<Void> deletePayment(@PathVariable java.util.UUID id) {
+    try {
+      paymentService.deletePayment(id);
+      return ResponseEntity.ok().build();
+    } catch (PaymentValidationException e) {
+      return ResponseEntity.status(400).build();
+    }
+  }
+
+  @PostMapping("/payments/{id}/complete")
+  ResponseEntity<Payment> completePayment(@PathVariable java.util.UUID id) {
+    try {
+      return ResponseEntity.ok(paymentService.completePayment(id));
+    } catch (PaymentValidationException e) {
+      return ResponseEntity.status(400).build();
+    }
+  }
+
+  @PostMapping("/payments/{id}/fail")
+  ResponseEntity<Payment> failPayment(@PathVariable java.util.UUID id) {
+    try {
+      return ResponseEntity.ok(paymentService.failPayment(id));
+    } catch (PaymentValidationException e) {
+      return ResponseEntity.status(400).build();
     }
   }
 }
