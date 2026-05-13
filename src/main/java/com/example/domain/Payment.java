@@ -1,6 +1,9 @@
 package com.example.domain;
 
 import java.sql.Date;
+import java.util.UUID;
+
+import com.example.domain.dto.PaymentDTO;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -14,11 +17,18 @@ import jakarta.persistence.Table;
 @lombok.AllArgsConstructor
 public class Payment {
         @Id
-        private Long id;
+        private UUID id;
         private double amount;
         private String currency;
         private String debtorAccount;
         private String creditorAccount;
         private String status;
         private Date createdAt;
+
+        public Payment(PaymentDTO paymentDTO) {
+                this.amount = paymentDTO.getAmount();
+                this.currency = paymentDTO.getCurrency();
+                this.debtorAccount = paymentDTO.getDebtorAccount();
+                this.creditorAccount = paymentDTO.getCreditorAccount();
+        }
 }

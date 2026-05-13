@@ -1,13 +1,18 @@
 package com.example.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.example.domain.Payment;
+import java.util.Date;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import java.util.Date;
-import java.util.List;
+
+import com.example.domain.Payment;
+import com.example.domain.dto.PaymentDTO;
 
 @SpringBootTest
 class TestPaymentService {
@@ -16,27 +21,23 @@ class TestPaymentService {
     private PaymentService paymentService;
 
     @Test
-    void insert_shouldSavePaymentInH2() {
-        // Arrange
-        Payment payment = Payment.builder()
-                .id(1L)
+    void insert_shouldSavePayment() {
+        PaymentDTO paymentDTO = PaymentDTO.builder()
                 .amount(100.0)
                 .currency("USD")
                 .debtorAccount("acc1")
                 .creditorAccount("acc2")
-                .status("NEW")
-                .createdAt(new java.sql.Date(new Date().getTime()))
                 .build();
 
-        // Act
-        Payment result = paymentService.insert(payment);
+        Payment result = paymentService.insert(paymentDTO);
 
-        // Assert
         assertNotNull(result);
-        assertEquals(1L, result.getId());
-
-        // Verify it's actually in the database
-        List<Payment> allPayments = paymentService.findAll();
-        assertTrue(allPayments.stream().anyMatch(p -> p.getId().equals(1L)));
+        assertNotNull(result.getId());
+        assertEquals(100.0, result.getAmount());
+        assertEquals("USD", result.getCurrency());
+        assertEquals("acc1", result.getDebtorAccount());
+        assertEquals("acc2", result.getCreditorAccount());
+        assertEquals("CREATED", result.getStatus());
+        assertNotNull(result.getCreatedAt());
     }
 }
