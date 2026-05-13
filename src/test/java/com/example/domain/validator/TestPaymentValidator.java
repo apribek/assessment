@@ -1,11 +1,18 @@
 package com.example.domain.validator;
 
-import static org.junit.jupiter.api.Assertions.*;
-import com.example.domain.dto.PaymentDTO;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
+
+import com.example.domain.Payment;
+import com.example.domain.dto.PaymentDTO;
 
 class TestPaymentValidator {
 
@@ -17,8 +24,8 @@ class TestPaymentValidator {
     }
 
     @Test
-    void supports_shouldReturnTrueForPaymentDTO() {
-        assertTrue(validator.supports(PaymentDTO.class));
+    void supports_shouldReturnTrueForPayment() {
+        assertTrue(validator.supports(Payment.class));
     }
 
     @Test
@@ -28,11 +35,13 @@ class TestPaymentValidator {
 
     @Test
     void validate_shouldHaveNoErrorsForValidPayment() {
-        PaymentDTO payment = PaymentDTO.builder()
+        Payment payment = Payment.builder()
+                .id(UUID.randomUUID())
                 .amount(100.0)
                 .currency("USD")
                 .debtorAccount("ACC1")
                 .creditorAccount("ACC2")
+                .status("CREATED")
                 .build();
         Errors errors = new BeanPropertyBindingResult(payment, "payment");
 
@@ -43,7 +52,7 @@ class TestPaymentValidator {
 
     @Test
     void validate_shouldHaveErrorsWhenAmountIsNotPositive() {
-        PaymentDTO payment = PaymentDTO.builder()
+        Payment payment = Payment.builder()
                 .amount(-1.0)
                 .currency("USD")
                 .debtorAccount("ACC1")
@@ -59,7 +68,7 @@ class TestPaymentValidator {
 
     @Test
     void validate_shouldHaveErrorsWhenCurrencyIsMissing() {
-        PaymentDTO payment = PaymentDTO.builder()
+        Payment payment = Payment.builder()
                 .amount(100.0)
                 .debtorAccount("ACC1")
                 .creditorAccount("ACC2")
@@ -74,7 +83,7 @@ class TestPaymentValidator {
 
     @Test
     void validate_shouldHaveErrorsWhenDebtorAccountIsMissing() {
-        PaymentDTO payment = PaymentDTO.builder()
+        Payment payment = Payment.builder()
                 .amount(100.0)
                 .currency("USD")
                 .creditorAccount("ACC2")
@@ -89,7 +98,7 @@ class TestPaymentValidator {
 
     @Test
     void validate_shouldHaveErrorsWhenCreditorAccountIsMissing() {
-        PaymentDTO payment = PaymentDTO.builder()
+        Payment payment = Payment.builder()
                 .amount(100.0)
                 .currency("USD")
                 .debtorAccount("ACC1")
@@ -104,25 +113,73 @@ class TestPaymentValidator {
 
     @Test
     void amountIsPositive_shouldReturnTrueForPositiveAmount() {
-        PaymentDTO payment = PaymentDTO.builder().amount(1.0).build();
+        Payment payment = Payment.builder().amount(1.0).build();
         assertTrue(validator.amountIsPositive(payment));
     }
 
     @Test
     void amountIsPositive_shouldReturnFalseForZeroOrNegative() {
-        assertFalse(validator.amountIsPositive(PaymentDTO.builder().amount(0).build()));
-        assertFalse(validator.amountIsPositive(PaymentDTO.builder().amount(-10).build()));
+        assertFalse(validator.amountIsPositive(Payment.builder().amount(0).build()));
+        assertFalse(validator.amountIsPositive(Payment.builder().amount(-10).build()));
     }
 
     @Test
     void currencyIsPresent_shouldReturnTrueWhenPresent() {
-        assertTrue(validator.currencyIsPresent(PaymentDTO.builder().currency("USD").build()));
+        assertTrue(validator.currencyIsPresent(Payment.builder().currency("USD").build()));
     }
 
     @Test
     void currencyIsPresent_shouldReturnFalseWhenMissingOrBlank() {
-        assertFalse(validator.currencyIsPresent(PaymentDTO.builder().build()));
-        assertFalse(validator.currencyIsPresent(PaymentDTO.builder().currency("").build()));
-        assertFalse(validator.currencyIsPresent(PaymentDTO.builder().currency("  ").build()));
+        assertFalse(validator.currencyIsPresent(Payment.builder().build()));
+        assertFalse(validator.currencyIsPresent(Payment.builder().currency("").build()));
+        assertFalse(validator.currencyIsPresent(Payment.builder().currency("  ").build()));
+    }
+
+    @Test
+    void validateBeforeUpdate_shouldHaveNoErrorsForValidTransition() {
+        java.sql.Date now = new java.sql.Date(System.currentTimeMillis());
+        Payment persistent = Payment.builder().status("CREATED").createdAt(now).amount(100.0).build();
+        Payment updated = Payment.builder().status("COMPLETED").createdAt(now).amount(100.0).build();
+
+        java.util.List<String> errors = validator.validateBeforeUpdate(updated, persistent);
+
+        assertTrue(errors.isEmpty());
+    }
+
+    @Test
+    void validateBeforeUpdate_shouldHaveErrorForInvalidStatusTransition() {
+        java.sql.Date now = new java.sql.Date(System.currentTimeMillis());
+        Payment persistent = Payment.builder().status("COMPLETED").createdAt(now).build();
+        Payment updated = Payment.builder().status("FAILED").createdAt(now).build();
+
+        java.util.List<String> errors = validator.validateBeforeUpdate(updated, persistent);
+
+        assertFalse(errors.isEmpty());
+        assertTrue(errors.get(0).contains("status.notChanged"));
+    }
+
+    @Test
+    void validateBeforeUpdate_shouldHaveErrorWhenCreatedAtChanged() {
+        java.sql.Date now = new java.sql.Date(System.currentTimeMillis());
+        java.sql.Date later = new java.sql.Date(now.getTime() + 1000);
+        Payment persistent = Payment.builder().status("CREATED").createdAt(now).build();
+        Payment updated = Payment.builder().status("CREATED").createdAt(later).build();
+
+        java.util.List<String> errors = validator.validateBeforeUpdate(updated, persistent);
+
+        assertFalse(errors.isEmpty());
+        assertTrue(errors.get(0).contains("createdAt.notChanged"));
+    }
+
+    @Test
+    void validateBeforeUpdate_shouldHaveErrorWhenAmountChangedInCompletedStatus() {
+        java.sql.Date now = new java.sql.Date(System.currentTimeMillis());
+        Payment persistent = Payment.builder().status("COMPLETED").createdAt(now).amount(100.0).build();
+        Payment updated = Payment.builder().status("COMPLETED").createdAt(now).amount(200.0).build();
+
+        java.util.List<String> errors = validator.validateBeforeUpdate(updated, persistent);
+
+        assertFalse(errors.isEmpty());
+        assertTrue(errors.stream().anyMatch(e -> e.contains("amount.cantBeChanged")));
     }
 }
