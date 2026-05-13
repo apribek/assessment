@@ -56,7 +56,6 @@ public class PaymentService {
         persistentPayment.setCurrency(payment.getCurrency());
         persistentPayment.setDebtorAccount(payment.getDebtorAccount());
         persistentPayment.setCreditorAccount(payment.getCreditorAccount());
-        persistentPayment.setStatus(payment.getStatus());
         paymentRepository.save(persistentPayment);
 
         return persistentPayment;

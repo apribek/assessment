@@ -136,10 +136,10 @@ class TestPaymentValidator {
     }
 
     @Test
-    void validateBeforeUpdate_shouldHaveNoErrorsForValidTransition() {
+    void validateBeforeUpdate_shouldHaveNoErrorsForValidUpdate() {
         java.time.LocalDate now = java.time.LocalDate.now();
         Payment persistent = Payment.builder().status("CREATED").createdAt(now).amount(100.0).build();
-        Payment updated = Payment.builder().status("COMPLETED").createdAt(now).amount(100.0).build();
+        Payment updated = Payment.builder().status("CREATED").createdAt(now).amount(200.0).build();
 
         java.util.List<String> errors = validator.validateBeforeUpdate(updated, persistent);
 

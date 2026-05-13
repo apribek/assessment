@@ -82,7 +82,11 @@ public class PaymentValidator implements Validator {
                 errorMessages.add("status.notChanged: Invalid status transition");
             }
         }
-        if (!Objects.equals(payment.getCreatedAt(), persistentPayment.getCreatedAt())) {
+        if (payment.getStatus() != null && !Objects.equals(payment.getStatus(), persistentPayment.getStatus())) {
+            errorMessages.add("status.notChanged: Status cannot be updated via PUT");
+        }
+
+        if (payment.getCreatedAt() != null && !Objects.equals(payment.getCreatedAt(), persistentPayment.getCreatedAt())) {
             errorMessages.add("createdAt.notChanged: Created at cannot be changed");
         }
 
