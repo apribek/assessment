@@ -25,6 +25,7 @@ public class PaymentService {
     }
 
     public Payment insert(Payment payment) {
+        System.out.println("Inserting payment: " + payment);
         return paymentRepository.save(payment);
     }
 }

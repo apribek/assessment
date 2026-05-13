@@ -1,20 +1,42 @@
 package com.example.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import com.example.domain.Payment;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import java.util.Date;
+import java.util.List;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = PaymentService.class)
+@SpringBootTest
 class TestPaymentService {
 
     @Autowired
-    PaymentService paymentService;
+    private PaymentService paymentService;
 
     @Test
-    void testPaymentService() {
-        paymentService.findAll();
+    void insert_shouldSavePaymentInH2() {
+        // Arrange
+        Payment payment = Payment.builder()
+                .id(1L)
+                .amount(100.0)
+                .currency("USD")
+                .debtorAccount("acc1")
+                .creditorAccount("acc2")
+                .status("NEW")
+                .createdAt(new java.sql.Date(new Date().getTime()))
+                .build();
+
+        // Act
+        Payment result = paymentService.insert(payment);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+
+        // Verify it's actually in the database
+        List<Payment> allPayments = paymentService.findAll();
+        assertTrue(allPayments.stream().anyMatch(p -> p.getId().equals(1L)));
     }
 }
