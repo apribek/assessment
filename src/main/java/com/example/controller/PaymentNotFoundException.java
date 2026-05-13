@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.NOT_FOUND)
 public class PaymentNotFoundException extends RuntimeException {
-    public PaymentNotFoundException(Long id) {
+    public PaymentNotFoundException(Object id) {
         super("Could not find payment " + id);
     }
 }

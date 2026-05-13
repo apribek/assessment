@@ -23,7 +23,7 @@ public class PaymentService {
         return paymentRepository.findAll();
     }
 
-    public Optional<Payment> findById(Long id) {
+    public Optional<Payment> findById(UUID id) {
         return paymentRepository.findById(id);
     }
 
